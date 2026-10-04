@@ -10,11 +10,11 @@ try{
     if($s['setting_key']==='pronunciation')$pronunciation=$s['setting_value']==='0'?'0':'1';
   }
   $day=max(1,(new DateTime($startDate))->diff(new DateTime($today))->days+1);
-  $rows=sb_query('user_words',['select'=>'id,english,farsi,example,ticks,learned,in_re_review,last_reviewed','user_id'=>'eq.'.$uid,'learned'=>'eq.false','order'=>'in_re_review.desc,ticks.asc,date_added.asc,id.asc','limit'=>5000],$t);
+  $rows=sb_query('user_words',['select'=>'id,english,farsi,example,definition_en,example_en,part_of_speech,cefr_level,frequency_rank,phonetic_us,audio_us,ticks,learned,in_re_review,last_reviewed','user_id'=>'eq.'.$uid,'learned'=>'eq.false','order'=>'in_re_review.desc,ticks.asc,date_added.asc,id.asc','limit'=>5000],$t);
   $words=[];
   foreach($rows as $w){
     if(!empty($w['last_reviewed'])&&substr($w['last_reviewed'],0,10)===$today)continue;
-    $words[]=['id'=>(int)$w['id'],'english'=>$w['english'],'farsi'=>$w['farsi'],'example'=>$w['example']??'','ticks'=>(int)$w['ticks'],'inReReview'=>(bool)$w['in_re_review']];
+    $words[]=['id'=>(int)$w['id'],'english'=>$w['english'],'farsi'=>$w['farsi'],'example'=>$w['example']??'','definition_en'=>$w['definition_en']??'','example_en'=>$w['example_en']??'','part_of_speech'=>$w['part_of_speech']??'','cefr_level'=>$w['cefr_level']??'','frequency_rank'=>isset($w['frequency_rank'])?(int)$w['frequency_rank']:null,'phonetic_us'=>$w['phonetic_us']??'','audio_us'=>$w['audio_us']??'','ticks'=>(int)$w['ticks'],'inReReview'=>(bool)$w['in_re_review']];
     if(count($words)>=$limit)break;
   }
   echo json_encode(['success'=>true,'studyDay'=>$day,'dailyLimit'=>$limit,'pronunciation'=>$pronunciation,'words'=>$words,'remainingEligible'=>count($words)],JSON_UNESCAPED_UNICODE);
