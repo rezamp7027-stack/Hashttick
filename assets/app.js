@@ -207,7 +207,7 @@ const Hashttick=(()=> {
       const edit=e.target.dataset.editWord;
       if(edit){
         const w=all.find(x=>String(x.id)===String(edit));if(!w)return;
-        const f=$('#addWordForm');f.id.value=w.id;f.english.value=w.english;f.farsi.value=w.farsi;f.example.value=w.example||'';
+        const f=$('#addWordForm');f.elements.id.value=w.id;f.english.value=w.english;f.farsi.value=w.farsi;f.example.value=w.example||'';
         $('#wordModalTitle').textContent='ویرایش واژه';$('#wordCancelEdit').classList.remove('hidden');openModal('wordModal');return;
       }
       const del=e.target.dataset.deleteWord;
@@ -216,7 +216,7 @@ const Hashttick=(()=> {
         try{await post('api/words.php',new URLSearchParams({action:'delete',id:del}));await reload()}catch(x){alert(x.message)}
       }
       if(e.target.id==='wordCancelEdit'){
-        const f=$('#addWordForm');f.reset();f.id.value='';$('#wordModalTitle').textContent='افزودن واژه';e.target.classList.add('hidden');
+        const f=$('#addWordForm');f.reset();f.elements.id.value='';$('#wordModalTitle').textContent='افزودن واژه';e.target.classList.add('hidden');
       }
     });
   }
