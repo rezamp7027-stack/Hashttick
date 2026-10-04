@@ -18,7 +18,7 @@ The main branch contains:
 - Browser pronunciation with a user preference
 - Pointer-based handwriting practice canvas
 - Dictionary/story/library collections
-- Collection vocabulary browsing and import into personal vocabulary
+- Collection vocabulary browsing and atomic bulk import into personal vocabulary
 - PDF and video collection links
 - Daily and historical statistics with recent-review snapshots
 - User settings for daily study limit and pronunciation
@@ -52,6 +52,7 @@ The migration sequence includes:
 5. Learning-state integrity hardening
 6. Secure review engine
 7. Controlled user-settings writes
+8. Atomic collection import
 
 All application tables currently have RLS enabled. The Supabase security advisor should remain clean before release.
 
