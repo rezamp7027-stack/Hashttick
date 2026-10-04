@@ -11,7 +11,7 @@ try{
   $day=max(1,(new DateTime($startDate))->diff(new DateTime($today))->days+1);
 
   $rows=sb_query('user_words',[
-    'select'=>'id,english,farsi,example,ticks,learned,in_re_review,last_reviewed,review_history,date_added',
+    'select'=>'id,english,farsi,example,definition_en,example_en,part_of_speech,cefr_level,frequency_rank,phonetic_us,audio_us,ticks,learned,in_re_review,last_reviewed,review_history,date_added',
     'user_id'=>'eq.'.$uid,
     'learned'=>'eq.false',
     'order'=>'in_re_review.desc,ticks.asc,date_added.asc,id.asc',
