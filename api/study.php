@@ -11,6 +11,13 @@ try{
   }
   $day=max(1,(new DateTime($startDate))->diff(new DateTime($today))->days+1);
   $rows=sb_query('user_words',['select'=>'id,english,farsi,example,definition_en,example_en,part_of_speech,cefr_level,frequency_rank,phonetic_us,audio_us,ticks,learned,in_re_review,last_reviewed','user_id'=>'eq.'.$uid,'learned'=>'eq.false','order'=>'in_re_review.desc,ticks.asc,date_added.asc,id.asc','limit'=>5000],$t);
+  if(!$rows){
+    $defaults=sb_query('collections',['select'=>'id','name'=>'eq.English Essentials A1','limit'=>1],$t);
+    if($defaults){
+      sb_rpc('import_collection_words',['p_collection_id'=>(int)$defaults[0]['id']],$t);
+      $rows=sb_query('user_words',['select'=>'id,english,farsi,example,definition_en,example_en,part_of_speech,cefr_level,frequency_rank,phonetic_us,audio_us,ticks,learned,in_re_review,last_reviewed','user_id'=>'eq.'.$uid,'learned'=>'eq.false','order'=>'in_re_review.desc,ticks.asc,date_added.asc,id.asc','limit'=>5000],$t);
+    }
+  }
   $words=[];
   foreach($rows as $w){
     if(!empty($w['last_reviewed'])&&substr($w['last_reviewed'],0,10)===$today)continue;
