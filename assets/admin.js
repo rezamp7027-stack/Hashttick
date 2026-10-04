@@ -3,15 +3,7 @@ const HashttickAdmin=(()=> {
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const csrf=()=>document.querySelector('meta[name="csrf-token"]')?.content||'';
 
-  async function api(url,opt={}){
-    const headers=new Headers(opt.headers||{});
-    if(String(opt.method||'GET').toUpperCase()!=='GET')headers.set('X-CSRF-Token',csrf());
-    const r=await fetch(url,{credentials:'same-origin',...opt,headers});
-    const d=await r.json().catch(()=>({success:false,error:'پاسخ نامعتبر'}));
-    if(r.status===401&&d.redirect){location.href=d.redirect;throw new Error(d.error||'جلسه منقضی شده است')}
-    if(!r.ok||d.success===false)throw new Error(d.error||'خطا');
-    return d;
-  }
+  const api=(url,opt={})=>Hashttick.api(url,opt);
 
   const post=(action,data)=>api('api/admin.php?action='+action,{
     method:'POST',
