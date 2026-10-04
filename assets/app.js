@@ -2,6 +2,7 @@ const Hashttick=(()=> {
   const $=s=>document.querySelector(s);
   const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const csrf=()=>document.querySelector('meta[name="csrf-token"]')?.content||'';
+  const safeHttpUrl=value=>{try{const u=new URL(String(value||''),location.href);return ['http:','https:'].includes(u.protocol)?u.href:''}catch(_e){return ''}};
 
   async function api(url,opt={},allowRefresh=true){
     const method=String(opt.method||'GET').toUpperCase();
@@ -229,7 +230,7 @@ const Hashttick=(()=> {
       $('#collections').innerHTML=collections.map(c=>{
         const safeColor=/^#[0-9a-fA-F]{6}$/.test(c.cover_color||'')?c.cover_color:'#8b7cff';
         return '<article class="collection-card">'+
-          (c.cover_image?'<img class="collection-cover-image" src="'+esc(c.cover_image)+'" alt="">':'<div class="cover" style="--cover:'+safeColor+'"></div>')+
+          (safeHttpUrl(c.cover_image)?'<img class="collection-cover-image" src="'+esc(safeHttpUrl(c.cover_image))+'" alt="">':'<div class="cover" style="--cover:'+safeColor+'"></div>')+
           '<span class="eyebrow">'+esc(c.type)+'</span><h2>'+esc(c.name)+'</h2><p>'+esc(c.description||'')+'</p>'+
           '<div class="meta"><span>'+Number(c.total_words||0)+' واژه</span><button class="btn secondary" data-collection="'+c.id+'">باز کردن</button></div></article>';
       }).join('')||'<div class="empty">هنوز مجموعه‌ای اضافه نشده است.</div>';
@@ -257,8 +258,8 @@ const Hashttick=(()=> {
           if(chapters.length){
             body+='<div class="story-chapters">'+chapters.map(ch=>'<article><span class="eyebrow">فصل '+Number(ch.chapter_number)+'</span><h3>'+esc(ch.chapter_title)+'</h3><p>'+esc(ch.content).replace(/\n/g,'<br>')+'</p></article>').join('')+'</div>';
           }
-          if(c.video_url)body+='<a class="btn secondary media-link" href="'+esc(c.video_url)+'" target="_blank" rel="noopener noreferrer">مشاهده ویدیو</a>';
-          if(c.pdf_url)body+='<a class="btn secondary media-link" href="'+esc(c.pdf_url)+'" target="_blank" rel="noopener noreferrer">باز کردن PDF</a>';
+          if(safeHttpUrl(c.video_url))body+='<a class="btn secondary media-link" href="'+esc(safeHttpUrl(c.video_url))+'" target="_blank" rel="noopener noreferrer">مشاهده ویدیو</a>';
+          if(safeHttpUrl(c.pdf_url))body+='<a class="btn secondary media-link" href="'+esc(safeHttpUrl(c.pdf_url))+'" target="_blank" rel="noopener noreferrer">باز کردن PDF</a>';
           reader.innerHTML='<div class="panel-head"><div><span class="eyebrow">'+esc(c.type)+'</span><h2>'+esc(c.name)+'</h2></div><button id="closeReader" class="btn ghost">بستن</button></div>'+
             (body||'<p class="muted">این مجموعه هنوز محتوایی ندارد.</p>')+'<div id="libraryMessage" class="form-message"></div>';
           $('#closeReader').onclick=()=>reader.classList.add('hidden');
