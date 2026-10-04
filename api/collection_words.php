@@ -17,7 +17,7 @@ try{
   }
 
   $rows=sb_query('collection_words',[
-    'select'=>'id,english,farsi,example,unit',
+    'select'=>'id,english,farsi,example,unit,definition_en,example_en,part_of_speech,cefr_level,frequency_rank,phonetic_us,audio_us',
     'collection_id'=>'eq.'.$id,
     'order'=>'unit.asc,id.asc',
     'limit'=>5000
