@@ -16,6 +16,14 @@ function requirePost(): void {
 function validColor(string $color): string {
     return preg_match('/^#[0-9a-fA-F]{6}$/',$color) ? $color : '#8b7cff';
 }
+function optionalHttpUrl(string $value): ?string {
+    $value=trim($value);
+    if($value==='') return null;
+    if(!filter_var($value,FILTER_VALIDATE_URL)) throw new RuntimeException('آدرس واردشده معتبر نیست');
+    $scheme=strtolower((string)parse_url($value,PHP_URL_SCHEME));
+    if(!in_array($scheme,['http','https'],true)) throw new RuntimeException('فقط آدرس‌های HTTP/HTTPS مجاز هستند');
+    return $value;
+}
 
 try {
     $t = getAccessToken();
@@ -70,9 +78,9 @@ try {
             'description'=>trim($_POST['description']??''),
             'type'=>$type,
             'cover_color'=>validColor(trim($_POST['cover_color']??'#8b7cff')),
-            'cover_image'=>trim($_POST['cover_image']??'') ?: null,
-            'video_url'=>trim($_POST['video_url']??'') ?: null,
-            'pdf_url'=>trim($_POST['pdf_url']??'') ?: null
+            'cover_image'=>optionalHttpUrl($_POST['cover_image']??''),
+            'video_url'=>optionalHttpUrl($_POST['video_url']??''),
+            'pdf_url'=>optionalHttpUrl($_POST['pdf_url']??'')
         ];
         if($a==='create_collection'){
             $r=sb_insert('collections',$data,$t,true);
