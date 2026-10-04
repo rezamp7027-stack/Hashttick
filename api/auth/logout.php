@@ -1,0 +1,1 @@
+<?php require_once '../../config.php'; clearAuthSession(); header('Location: ../../login.php'); exit; ?>
