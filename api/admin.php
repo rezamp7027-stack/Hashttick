@@ -55,7 +55,7 @@ try {
             'select'=>'id,english,farsi,example,unit',
             'collection_id'=>'eq.'.$id,
             'order'=>'unit.asc,id.asc',
-            'limit'=>1000
+            'limit'=>5000
         ],$t);
         $stories=sb_query('collection_stories',[
             'select'=>'id,chapter_number,chapter_title,content',
