@@ -43,6 +43,72 @@ try {
         ],$t)]);
     }
 
+    if ($a === 'seed_defaults') {
+        requirePost();
+        $file=__DIR__.'/../assets/default-content.json';
+        if(!is_file($file)) throw new RuntimeException('فایل محتوای اولیه پیدا نشد');
+        $seed=json_decode((string)file_get_contents($file),true);
+        if(!is_array($seed)) throw new RuntimeException('محتوای اولیه نامعتبر است');
+
+        $collectionsSeeded=0;$addedWords=0;
+        foreach($seed as $item){
+            $name=trim((string)($item['name']??''));
+            $description=trim((string)($item['description']??''));
+            $type=(string)($item['type']??'dictionary');
+            if($name===''||!in_array($type,['dictionary','story','pdf','video'],true))continue;
+
+            $found=sb_query('collections',['select'=>'id,name,description,type','name'=>'eq.'.$name,'limit'=>1],$t);
+            if($found){
+                $collectionId=(int)$found[0]['id'];
+            }else{
+                $created=sb_insert('collections',[
+                    'name'=>$name,
+                    'description'=>$description,
+                    'type'=>$type,
+                    'cover_color'=>'#8b7cff'
+                ],$t,true);
+                if(empty($created[0]['id']))continue;
+                $collectionId=(int)$created[0]['id'];
+                $collectionsSeeded++;
+            }
+
+            $existing=sb_query('collection_words',[
+                'select'=>'english,unit',
+                'collection_id'=>'eq.'.$collectionId,
+                'limit'=>5000
+            ],$t);
+            $seen=[];
+            foreach($existing as $row){
+                $seen[strtolower(trim((string)$row['english'])).'|'.(int)$row['unit']]=true;
+            }
+
+            $rows=[];
+            foreach((array)($item['words']??[]) as $i=>$word){
+                $english=trim((string)($word[0]??''));
+                $farsi=trim((string)($word[1]??''));
+                $example=trim((string)($word[2]??''));
+                $unit=(int)floor($i/10)+1;
+                $key=strtolower($english).'|'.$unit;
+                if($english===''||$farsi===''||isset($seen[$key]))continue;
+                $rows[]=['collection_id'=>$collectionId,'english'=>$english,'farsi'=>$farsi,'example'=>$example,'unit'=>$unit];
+                $seen[$key]=true;
+            }
+            if($rows){
+                $inserted=sb_insert_many('collection_words',$rows,$t);
+                $addedWords+=count($inserted);
+            }
+
+            $count=sb_query('collection_words',[
+                'select'=>'id',
+                'collection_id'=>'eq.'.$collectionId,
+                'limit'=>5000
+            ],$t);
+            sb_update('collections',['id'=>$collectionId],['total_words'=>count($count)],$t);
+        }
+
+        adminJson(['success'=>true,'collectionsSeeded'=>$collectionsSeeded,'addedWords'=>$addedWords]);
+    }
+
     if ($a === 'collection') {
         $id=(int)($_GET['id']??0);
         if(!$id) throw new RuntimeException('شناسه مجموعه نامعتبر است');
