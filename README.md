@@ -1,60 +1,83 @@
 # Hashttick
 
-Hashttick is a Persian-first English vocabulary learning application using PHP, Supabase Auth, PostgreSQL and Row Level Security.
+Hashttick is a Persian-first English vocabulary learning application built with PHP, Supabase Auth, PostgreSQL and Row Level Security.
 
-## Features
-- Email/password authentication
-- Personal vocabulary: add/edit/delete
-- 8-tick review flow; 6 successful ticks = learned
-- Red review and re-review flow
-- Review history, daily/weekly statistics and tick distribution
-- Study-day / streak-break reset behavior
-- Dictionary collections and units
-- Story collections and chapters
-- PDF/video collection metadata
-- Add collection words to personal vocabulary
-- Word lookup and FastDic fallback
+## Current application
+
+The production branch contains:
+
+- Email/password authentication with hardened PHP sessions
+- Responsive Persian-first dashboard
+- Daily study session and atomic tick review flow
+- Personal vocabulary CRUD
+- 6-success threshold for learned words
+- Red/re-review workflow
 - Browser pronunciation
-- Handwriting canvas + optional Tesseract fallback
-- AI story generation via Groq using a server-side environment secret
-- Admin collection, dictionary, story and statistics management
+- Handwriting canvas
+- Dictionary/story/library collections
+- Import collection words into personal vocabulary
+- Daily and historical statistics
+- User settings
+- Admin console for collections and users
+- Server-side Supabase REST adapter
+- RLS migrations and database-backed admin authorization
+
+## Architecture
+
+\`PHP pages → PHP API → Supabase Auth / PostgREST → PostgreSQL + RLS\`
+
+The browser never receives a Supabase service-role key. The server uses the publishable key together with the user's access token.
 
 ## Supabase
-Project ref: `htfrixfcirgrhlmwtkjs`.
 
-RLS is enabled on every exposed application table. Personal records are scoped by `auth.uid()`. Admin collection writes are controlled by the database-backed `private.is_admin()` helper.
+The migration files are versioned under \`supabase/migrations/\`.
 
-Migrations:
-- `supabase/migrations/20261004000000_hashttick_initial.sql`
-- `supabase/migrations/20261004010000_harden_rls.sql`
+Important: the repository contains the schema and migrations, but deployment to a Supabase project is a separate operation. Do not point the application at an unrelated project.
 
-RLS contract:
-- `supabase/tests/rls_contract.sql`
+Required host environment:
 
-## Security
-- No MySQL runtime dependency.
-- No raw SQL execution from the web admin panel.
-- No hard-coded AI credentials.
-- SSL certificate and hostname verification remain enabled for outbound cURL.
-- Ordinary users cannot update `profiles.is_admin`.
-- Personal tables are isolated by authenticated user.
-- Admin writes require `is_admin=true`.
+- \`SUPABASE_URL\`
+- \`SUPABASE_PUBLISHABLE_KEY\`
 
-## Environment
-Set these on the PHP host:
-- `SUPABASE_URL=https://htfrixfcirgrhlmwtkjs.supabase.co`
-- `SUPABASE_PUBLISHABLE_KEY`
-- `GROQ_API_KEY` (optional)
-- `GROQ_MODEL` (optional)
+Optional:
 
-Never commit Supabase secret/service keys or Groq credentials.
+- \`GROQ_API_KEY\`
+- \`GROQ_MODEL\`
+
+Never commit service-role keys, secret keys, passwords or API tokens.
 
 ## Deployment
-This is a PHP application and must be deployed to PHP-capable hosting. GitHub Pages cannot execute the PHP backend.
 
-To create an administrator after the first registration:
-```sql
+Hashttick requires PHP hosting. GitHub Pages cannot execute the PHP backend.
+
+Recommended PHP requirements:
+
+- PHP 8.1+
+- cURL enabled
+- JSON enabled
+- HTTPS
+- environment variables configured
+
+After the first user registers, promote the administrator explicitly from a protected database session:
+
+\`\`\`sql
 update public.profiles
 set is_admin = true
 where email = 'YOUR_ADMIN_EMAIL';
-```
+\`\`\`
+
+## Security model
+
+- RLS is enabled on application tables.
+- Personal rows are scoped by \`auth.uid()\`.
+- Admin collection writes require \`private.is_admin()\`.
+- \`profiles.is_admin\` cannot be modified by ordinary authenticated clients.
+- PHP sessions use HttpOnly/SameSite cookies and session ID regeneration after authentication.
+- TLS certificate and hostname verification remain enabled for outbound cURL.
+- No raw SQL execution is exposed through the web admin.
+
+## Important production note
+
+The review engine is authoritative in PostgreSQL through \`review_word()\`. The PHP layer does not calculate ticks itself.
+
+Before public launch, apply the migrations to the intended Supabase project and run the RLS contract/security checks against that project.
