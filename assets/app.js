@@ -274,10 +274,10 @@ const Hashttick=(()=> {
       $('#collections').innerHTML=collections.map(c=>{
         const safeColor=/^#[0-9a-fA-F]{6}$/.test(c.cover_color||'')?c.cover_color:'#8b7cff';
         const href='collection.php?id='+encodeURIComponent(c.id);
-        return '<article class="collection-card">'+
+        return '<a class="collection-card" href="'+href+'">'+
           (safeHttpUrl(c.cover_image)?'<img class="collection-cover-image" src="'+esc(safeHttpUrl(c.cover_image))+'" alt="">':'<div class="cover" style="--cover:'+safeColor+'"></div>')+
           '<span class="eyebrow">'+esc(c.type)+'</span><h2>'+esc(c.name)+'</h2><p>'+esc(c.description||'')+'</p>'+
-          '<div class="meta"><span>'+Number(c.total_words||0)+' واژه</span><a class="btn secondary" href="'+href+'">باز کردن مجموعه</a></div></article>';
+          '<div class="meta"><span>'+Number(c.total_words||0)+' واژه</span><span class="btn secondary">باز کردن مجموعه</span></div></a>';
       }).join('')||'<div class="empty">هنوز مجموعه‌ای اضافه نشده است.</div>';
     }catch(e){$('#collections').textContent=e.message}
   }
