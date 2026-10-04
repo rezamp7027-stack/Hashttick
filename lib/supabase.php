@@ -73,6 +73,16 @@ function sb_update(string $table,array $filters,array $row,?string $token=null):
 function sb_delete(string $table,array $filters,?string $token=null): array{$q=[];foreach($filters as $k=>$v)$q[$k]='eq.'.$v;return sb_request('DELETE','/rest/v1/'.$table,null,$q,$token,['Prefer: return=representation'])['data']??[];}
 function sb_upsert(string $table,array $row,array $onConflict,?string $token=null): array{return sb_request('POST','/rest/v1/'.$table,$row,['on_conflict'=>implode(',',$onConflict)],$token,['Prefer: resolution=merge-duplicates,return=representation'])['data']??[];}
 function sb_rpc(string $function,array $args=[],?string $token=null): mixed{return sb_request('POST','/rest/v1/rpc/'.$function,$args,[],$token)['data']??null;}
-function sb_error_message(Throwable $e): string { $m=$e->getMessage();if(str_contains($m,'Invalid login credentials'))return 'ایمیل یا رمز عبور اشتباه است';if(str_contains($m,'User already registered'))return 'این ایمیل قبلاً ثبت شده است';if(str_contains($m,'Email not confirmed'))return 'ایمیل شما هنوز تأیید نشده است';if(str_contains($m,'duplicate key'))return 'این مقدار قبلاً ثبت شده است';return $m?:'خطای نامشخص'; }
+function sb_error_message(Throwable $e): string {
+    $m=$e->getMessage();
+    $lower=strtolower($m);
+    if(str_contains($m,'Invalid login credentials'))return 'ایمیل یا رمز عبور اشتباه است';
+    if(str_contains($m,'User already registered'))return 'این ایمیل قبلاً ثبت شده است';
+    if(str_contains($m,'Email not confirmed'))return 'ایمیل شما هنوز تأیید نشده است';
+    if(str_contains($m,'duplicate key'))return 'این مقدار قبلاً ثبت شده است';
+    if(str_contains($lower,'jwt expired')||str_contains($lower,'token is expired'))return 'جلسه ورود منقضی شده است؛ دوباره وارد شوید';
+    if(str_contains($lower,'refresh token')&&(str_contains($lower,'invalid')||str_contains($lower,'not found')||str_contains($lower,'already used')))return 'جلسه ورود دیگر معتبر نیست؛ دوباره وارد شوید';
+    return $m?:'خطای نامشخص';
+}
 function sb_filter_escape(string $value): string{return str_replace(['\\',','],['\\\\','\\,'],$value);}
 ?>
