@@ -54,9 +54,14 @@ const HashttickAdmin=(()=> {
     ).join('')||'<div class="empty">مجموعه‌ای وجود ندارد.</div>';
 
     const u=await api('api/admin.php?action=users');
-    $('#adminUserList').innerHTML=(u.users||[]).map(x=>
-      '<div class="word-item"><div><b>'+esc(x.username)+'</b><br><small>'+esc(x.email)+'</small></div><span class="status-pill">'+(x.is_admin?'ADMIN':'USER')+'</span></div>'
-    ).join('')||'<div class="empty">کاربری وجود ندارد.</div>';
+    const currentUserId=String(u.currentUserId||'');
+    $('#adminUserList').innerHTML=(u.users||[]).map(x=>{
+      const self=String(x.id)===currentUserId;
+      const action=self
+        ? '<span class="status-pill">حساب فعلی</span>'
+        : '<button class="btn '+(x.is_admin?'danger':'secondary')+'" data-toggle-admin="'+x.id+'" data-next-admin="'+(x.is_admin?'0':'1')+'">'+(x.is_admin?'لغو ادمینی':'اعطای ادمینی')+'</button>';
+      return '<div class="word-item"><div><b>'+esc(x.username)+'</b><br><small>'+esc(x.email)+'</small></div><div class="item-actions"><span class="status-pill">'+(x.is_admin?'ADMIN':'USER')+'</span>'+action+'</div></div>';
+    }).join('')||'<div class="empty">کاربری وجود ندارد.</div>';
   }
 
   async function openCollection(id){
@@ -150,6 +155,21 @@ const HashttickAdmin=(()=> {
         return;
       }
       if(e.target.dataset.editStory){editStory(e.target.dataset.editStory);return;}
+      if(e.target.dataset.toggleAdmin){
+        const userId=e.target.dataset.toggleAdmin;
+        const makeAdmin=e.target.dataset.nextAdmin==='1';
+        const actionText=makeAdmin?'ادمین شود':'دسترسی ادمین او لغو شود';
+        if(!confirm('دسترسی این کاربر '+actionText+'؟'))return;
+        try{
+          const b=e.target;
+          b.disabled=true;
+          await post('set_admin',{user_id:userId,is_admin:makeAdmin?'1':'0'});
+          await load();
+        }catch(x){
+          alert(x.message);
+        }
+        return;
+      }
       if(e.target.dataset.storyDelete){
         if(confirm('فصل حذف شود؟')){try{await post('delete_story',{id:e.target.dataset.storyDelete});await openCollection(current.id)}catch(x){alert(x.message)}}
       }
