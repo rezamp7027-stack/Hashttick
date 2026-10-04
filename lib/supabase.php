@@ -65,6 +65,10 @@ function sb_auth(string $action,array $payload): array {
 }
 function sb_query(string $table,array $query=[],?string $token=null): array{return sb_request('GET','/rest/v1/'.$table,null,$query,$token)['data']??[];}
 function sb_insert(string $table,array $row,?string $token=null,bool $returnRepresentation=true): array{$h=$returnRepresentation?['Prefer: return=representation']:['Prefer: return=minimal'];return sb_request('POST','/rest/v1/'.$table,$row,[],$token,$h)['data']??[];}
+function sb_insert_many(string $table,array $rows,?string $token=null): array{
+    if(!$rows)return [];
+    return sb_request('POST','/rest/v1/'.$table,$rows,[],$token,['Prefer: return=representation'])['data']??[];
+}
 function sb_update(string $table,array $filters,array $row,?string $token=null): array{$q=[];foreach($filters as $k=>$v)$q[$k]='eq.'.$v;return sb_request('PATCH','/rest/v1/'.$table,$row,$q,$token,['Prefer: return=representation'])['data']??[];}
 function sb_delete(string $table,array $filters,?string $token=null): array{$q=[];foreach($filters as $k=>$v)$q[$k]='eq.'.$v;return sb_request('DELETE','/rest/v1/'.$table,null,$q,$token,['Prefer: return=representation'])['data']??[];}
 function sb_upsert(string $table,array $row,array $onConflict,?string $token=null): array{return sb_request('POST','/rest/v1/'.$table,$row,['on_conflict'=>implode(',',$onConflict)],$token,['Prefer: resolution=merge-duplicates,return=representation'])['data']??[];}
