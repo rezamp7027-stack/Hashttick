@@ -273,52 +273,72 @@ const Hashttick=(()=> {
       const collections=d.collections||[];
       $('#collections').innerHTML=collections.map(c=>{
         const safeColor=/^#[0-9a-fA-F]{6}$/.test(c.cover_color||'')?c.cover_color:'#8b7cff';
+        const href='collection.php?id='+encodeURIComponent(c.id);
         return '<article class="collection-card">'+
           (safeHttpUrl(c.cover_image)?'<img class="collection-cover-image" src="'+esc(safeHttpUrl(c.cover_image))+'" alt="">':'<div class="cover" style="--cover:'+safeColor+'"></div>')+
           '<span class="eyebrow">'+esc(c.type)+'</span><h2>'+esc(c.name)+'</h2><p>'+esc(c.description||'')+'</p>'+
-          '<div class="meta"><span>'+Number(c.total_words||0)+' واژه</span><button class="btn secondary" data-collection="'+c.id+'">باز کردن</button></div></article>';
+          '<div class="meta"><span>'+Number(c.total_words||0)+' واژه</span><a class="btn secondary" href="'+href+'">باز کردن مجموعه</a></div></article>';
       }).join('')||'<div class="empty">هنوز مجموعه‌ای اضافه نشده است.</div>';
-
-      document.querySelectorAll('[data-collection]').forEach(b=>b.addEventListener('click',async()=>{
-        const id=b.dataset.collection;
-        const reader=$('#storyReader');
-        reader.classList.remove('hidden');
-        reader.innerHTML='<div class="empty">در حال بارگذاری محتوا...</div>';
-        try{
-          const [detail,wordData]=await Promise.all([
-            api('api/collections.php?id='+encodeURIComponent(id)),
-            api('api/collection_words.php?collection_id='+encodeURIComponent(id))
-          ]);
-          const c=detail.collection;
-          const words=wordData.words||[];
-          const chapters=c.chapters||[];
-          let body='';
-          if(words.length){
-            body+='<div class="collection-content-head"><h3>واژه‌های این مجموعه</h3><button class="btn primary" data-import-collection="'+c.id+'">افزودن به واژگان من</button></div>';
-            body+='<div class="library-word-list">'+words.map(w=>
-              '<div class="library-word"><div><b>'+esc(w.english)+'</b><span>'+esc(w.farsi)+'</span>'+(w.example_en?'<small>'+esc(w.example_en)+'</small>':(w.example?'<small>'+esc(w.example)+'</small>':''))+'<small>'+esc([w.part_of_speech,w.cefr_level,w.phonetic_us?'/'+w.phonetic_us+'/':''].filter(Boolean).join(' · '))+'</small></div><small>واحد '+Number(w.unit||1)+'</small></div>'
-            ).join('')+'</div>';
-          }
-          if(chapters.length){
-            body+='<div class="story-chapters">'+chapters.map(ch=>'<article><span class="eyebrow">فصل '+Number(ch.chapter_number)+'</span><h3>'+esc(ch.chapter_title)+'</h3><p>'+esc(ch.content).replace(/\n/g,'<br>')+'</p></article>').join('')+'</div>';
-          }
-          if(safeHttpUrl(c.video_url))body+='<a class="btn secondary media-link" href="'+esc(safeHttpUrl(c.video_url))+'" target="_blank" rel="noopener noreferrer">مشاهده ویدیو</a>';
-          if(safeHttpUrl(c.pdf_url))body+='<a class="btn secondary media-link" href="'+esc(safeHttpUrl(c.pdf_url))+'" target="_blank" rel="noopener noreferrer">باز کردن PDF</a>';
-          reader.innerHTML='<div class="panel-head"><div><span class="eyebrow">'+esc(c.type)+'</span><h2>'+esc(c.name)+'</h2></div><button id="closeReader" class="btn ghost">بستن</button></div>'+
-            (body||'<p class="muted">این مجموعه هنوز محتوایی ندارد.</p>')+'<div id="libraryMessage" class="form-message"></div>';
-          $('#closeReader').onclick=()=>reader.classList.add('hidden');
-          reader.querySelector('[data-import-collection]')?.addEventListener('click',async()=>{
-            const btn=reader.querySelector('[data-import-collection]');btn.disabled=true;
-            try{
-              const result=await post('api/collection_words.php',new URLSearchParams({collection_id:c.id}));
-              $('#libraryMessage').style.color='var(--green)';
-              $('#libraryMessage').textContent=(result.added||0)+' واژه به واژگان من اضافه شد.';
-            }catch(x){$('#libraryMessage').textContent=x.message}
-            finally{btn.disabled=false}
-          });
-        }catch(x){reader.innerHTML='<div class="form-error">'+esc(x.message)+'</div>'}
-      }));
     }catch(e){$('#collections').textContent=e.message}
+  }
+
+  async function collection(){
+    const params=new URLSearchParams(location.search);
+    const id=Number(params.get('id')||0);
+    const title=$('#collectionTitle');
+    const meta=$('#collectionMeta');
+    const root=$('#collectionContent');
+    if(!id){
+      title.textContent='مجموعه نامعتبر';
+      meta.textContent='';
+      root.innerHTML='<div class="form-error">شناسه مجموعه معتبر نیست.</div>';
+      return;
+    }
+    try{
+      const [detail,wordData]=await Promise.all([
+        api('api/collections.php?id='+encodeURIComponent(id)),
+        api('api/collection_words.php?collection_id='+encodeURIComponent(id))
+      ]);
+      const c=detail.collection;
+      const words=wordData.words||[];
+      const chapters=c.chapters||[];
+      title.textContent=c.name;
+      meta.textContent=Number(c.total_words||words.length)+' واژه · '+(c.description||'');
+      let body='<div class="collection-content-head"><div><span class="eyebrow">'+esc(c.type)+'</span><h2>فهرست واژه‌ها</h2></div>';
+      if(words.length) body+='<button class="btn primary" id="importCollection">افزودن همه به واژگان من</button>';
+      body+='</div>';
+      if(words.length){
+        body+='<div class="library-word-list">'+words.map((w,i)=>{
+          const meta=[w.part_of_speech,w.cefr_level,w.phonetic_us?'/'+w.phonetic_us+'/':''].filter(Boolean).join(' · ');
+          return '<article class="library-word"><div><span class="word-number">'+(i+1)+'</span><b>'+esc(w.english)+'</b><span>'+esc(w.farsi)+'</span>'+
+            (w.example_en?'<small>'+esc(w.example_en)+'</small>':(w.example?'<small>'+esc(w.example)+'</small>':''))+
+            (meta?'<small>'+esc(meta)+'</small>':'')+'</div><small>واحد '+Number(w.unit||1)+'</small></article>';
+        }).join('')+'</div>';
+      }else{
+        body+='<div class="empty">این مجموعه هنوز واژه‌ای ندارد.</div>';
+      }
+      if(chapters.length){
+        body+='<div class="story-chapters">'+chapters.map(ch=>'<article><span class="eyebrow">فصل '+Number(ch.chapter_number)+'</span><h3>'+esc(ch.chapter_title)+'</h3><p>'+esc(ch.content).replace(/\n/g,'<br>')+'</p></article>').join('')+'</div>';
+      }
+      if(safeHttpUrl(c.video_url))body+='<a class="btn secondary media-link" href="'+esc(safeHttpUrl(c.video_url))+'" target="_blank" rel="noopener noreferrer">مشاهده ویدیو</a>';
+      if(safeHttpUrl(c.pdf_url))body+='<a class="btn secondary media-link" href="'+esc(safeHttpUrl(c.pdf_url))+'" target="_blank" rel="noopener noreferrer">باز کردن PDF</a>';
+      body+='<div id="collectionMessage" class="form-message"></div>';
+      root.innerHTML=body;
+      $('#importCollection')?.addEventListener('click',async()=>{
+        const btn=$('#importCollection');
+        btn.disabled=true;
+        try{
+          const result=await post('api/collection_words.php',new URLSearchParams({collection_id:String(c.id)}));
+          $('#collectionMessage').style.color='var(--green)';
+          $('#collectionMessage').textContent=(result.added||0)+' واژه به واژگان من اضافه شد.';
+        }catch(x){$('#collectionMessage').textContent=x.message}
+        finally{btn.disabled=false}
+      });
+    }catch(e){
+      title.textContent='خطا';
+      meta.textContent='';
+      root.innerHTML='<div class="form-error">'+esc(e.message)+'</div>';
+    }
   }
 
   async function statistics(){
@@ -359,5 +379,5 @@ const Hashttick=(()=> {
   document.addEventListener('click',handleStudyClick);
   document.addEventListener('DOMContentLoaded',initCanvas);
 
-  return {api,auth,dashboard,study,vocabulary,library,statistics,settings,openModal,closeModal,openWordCreate};
+  return {api,auth,dashboard,study,vocabulary,library,collection,statistics,settings,openModal,closeModal,openWordCreate};
 })();
