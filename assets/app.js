@@ -36,7 +36,19 @@ const Hashttick=(()=> {
   function closeModal(id){$('#'+id)?.classList.add('hidden')}
   function openWordCreate(){const f=$('#addWordForm');if(!f)return;f.reset();if(f.elements.id)f.elements.id.value='';$('#wordModalTitle').textContent='افزودن واژه';$('#wordCancelEdit')?.classList.add('hidden');openModal('wordModal')}
 
-  function speak(text){
+  function speak(text,audioUrl=''){
+    const src=safeHttpUrl(audioUrl);
+    if(src){
+      try{
+        const audio=new Audio(src);
+        audio.preload='auto';
+        audio.play().catch(()=>speakFallback(text));
+        return true;
+      }catch(_e){}
+    }
+    return speakFallback(text);
+  }
+  function speakFallback(text){
     if(!text||!('speechSynthesis'in window))return false;
     speechSynthesis.cancel();
     const u=new SpeechSynthesisUtterance(text);
@@ -108,8 +120,15 @@ const Hashttick=(()=> {
     $('#progressBar').style.width=((state.index+1)/state.words.length*100)+'%';
     $('#wordEnglish').textContent=w.english;
     $('#wordFarsi').textContent=w.farsi;
+    $('#wordDefinition').textContent=w.definition_en||'';
+    $('#wordDefinition').classList.toggle('hidden',!w.definition_en);
+    $('#wordExampleEn').textContent=w.example_en||'';
+    $('#wordExampleEn').classList.toggle('hidden',!w.example_en);
     $('#wordExample').textContent=w.example||'';
     $('#wordExample').classList.toggle('hidden',!w.example);
+    const meta=[w.part_of_speech,w.cefr_level,w.phonetic_us?'/'+w.phonetic_us+'/':''].filter(Boolean);
+    $('#wordMeta').textContent=meta.join(' · ');
+    $('#wordMeta').classList.toggle('hidden',!meta.length);
     $('#answerBox').classList.add('hidden');
     $('#revealBtn').classList.remove('hidden');
     $('#wordHint').textContent=w.ticks+' تیک · '+(w.inReReview?'مرور مجدد':'مرور عادی');
@@ -145,7 +164,10 @@ const Hashttick=(()=> {
     if(e.target.id==='revealBtn'){
       $('#answerBox').classList.remove('hidden');
       e.target.classList.add('hidden');
-      if(state.pronunciation)speak($('#wordEnglish')?.textContent||'');
+      if(state.pronunciation){
+        const w=state.words[state.index];
+        speak(w?.english||$('#wordEnglish')?.textContent||'',w?.audio_us||'');
+      }
       return;
     }
     if(e.target.id==='rightBtn'||e.target.id==='wrongBtn'){
@@ -166,7 +188,8 @@ const Hashttick=(()=> {
       return;
     }
     if(e.target.id==='speakBtn'){
-      if(!speak($('#wordEnglish')?.textContent||''))alert('مرورگر شما از تلفظ صوتی پشتیبانی نمی‌کند.');
+      const w=state.words[state.index];
+      if(!speak(w?.english||$('#wordEnglish')?.textContent||'',w?.audio_us||''))alert('مرورگر شما از تلفظ صوتی پشتیبانی نمی‌کند.');
       return;
     }
     if(e.target.id==='writeBtn'){$('#canvasWrap')?.classList.toggle('hidden');return;}
@@ -252,7 +275,7 @@ const Hashttick=(()=> {
           if(words.length){
             body+='<div class="collection-content-head"><h3>واژه‌های این مجموعه</h3><button class="btn primary" data-import-collection="'+c.id+'">افزودن به واژگان من</button></div>';
             body+='<div class="library-word-list">'+words.map(w=>
-              '<div class="library-word"><div><b>'+esc(w.english)+'</b><span>'+esc(w.farsi)+'</span>'+(w.example?'<small>'+esc(w.example)+'</small>':'')+'</div><small>واحد '+Number(w.unit||1)+'</small></div>'
+              '<div class="library-word"><div><b>'+esc(w.english)+'</b><span>'+esc(w.farsi)+'</span>'+(w.example_en?'<small>'+esc(w.example_en)+'</small>':(w.example?'<small>'+esc(w.example)+'</small>':''))+'<small>'+esc([w.part_of_speech,w.cefr_level,w.phonetic_us?'/'+w.phonetic_us+'/':''].filter(Boolean).join(' · '))+'</small></div><small>واحد '+Number(w.unit||1)+'</small></div>'
             ).join('')+'</div>';
           }
           if(chapters.length){
