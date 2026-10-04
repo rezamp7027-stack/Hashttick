@@ -59,14 +59,16 @@ try {
             throw new RuntimeException('وضعیت ادمین نامعتبر است');
         }
 
-        $result=sb_rpc(
-            'admin_set_user_role',
-            [
-                'target_user_id'=>$targetUserId,
-                'make_admin'=>$rawStatus==='1'
-            ],
+        $result=sb_update(
+            'profiles',
+            ['id'=>$targetUserId],
+            ['is_admin'=>$rawStatus==='1'],
             $t
         );
+
+        if($result===[]){ 
+            throw new RuntimeException('کاربر پیدا نشد یا دسترسی کافی ندارید');
+        }
 
         $updated=sb_query('profiles',[
             'select'=>'id,username,email,is_admin,created_at',
