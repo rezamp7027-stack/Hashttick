@@ -23,7 +23,7 @@ try{
     echo json_encode(['success'=>true],JSON_UNESCAPED_UNICODE);exit;
   }
   if($_SERVER['REQUEST_METHOD']!=='GET'){http_response_code(405);header('Allow: GET, POST');throw new RuntimeException('متد غیرمجاز');}
-  $rows=sb_query('user_words',['select'=>'id,english,farsi,example,ticks,learned,in_re_review,date_added','user_id'=>'eq.'.$uid,'order'=>'date_added.desc,id.desc','limit'=>5000],$t);
-  echo json_encode(['success'=>true,'words'=>array_map(fn($w)=>['id'=>(int)$w['id'],'english'=>$w['english'],'farsi'=>$w['farsi'],'example'=>$w['example']??'','ticks'=>(int)$w['ticks'],'learned'=>(bool)$w['learned'],'in_re_review'=>(bool)$w['in_re_review']],$rows)],JSON_UNESCAPED_UNICODE);
+  $rows=sb_query('user_words',['select'=>'id,english,farsi,example,definition_en,example_en,part_of_speech,cefr_level,frequency_rank,phonetic_us,audio_us,ticks,learned,in_re_review,date_added','user_id'=>'eq.'.$uid,'order'=>'date_added.desc,id.desc','limit'=>5000],$t);
+  echo json_encode(['success'=>true,'words'=>array_map(fn($w)=>['id'=>(int)$w['id'],'english'=>$w['english'],'farsi'=>$w['farsi'],'example'=>$w['example']??'','definition_en'=>$w['definition_en']??'','example_en'=>$w['example_en']??'','part_of_speech'=>$w['part_of_speech']??'','cefr_level'=>$w['cefr_level']??'','frequency_rank'=>isset($w['frequency_rank'])?(int)$w['frequency_rank']:null,'phonetic_us'=>$w['phonetic_us']??'','audio_us'=>$w['audio_us']??'','ticks'=>(int)$w['ticks'],'learned'=>(bool)$w['learned'],'in_re_review'=>(bool)$w['in_re_review']],$rows)],JSON_UNESCAPED_UNICODE);
 }catch(Throwable $e){if(http_response_code()===200)http_response_code(400);echo json_encode(['success'=>false,'error'=>sb_error_message($e)],JSON_UNESCAPED_UNICODE);}
 ?>
