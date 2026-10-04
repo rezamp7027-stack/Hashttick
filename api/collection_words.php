@@ -20,7 +20,7 @@ try{
     'select'=>'id,english,farsi,example,unit',
     'collection_id'=>'eq.'.$id,
     'order'=>'unit.asc,id.asc',
-    'limit'=>1000
+    'limit'=>5000
   ],$t);
   echo json_encode(['success'=>true,'words'=>$rows],JSON_UNESCAPED_UNICODE);
 }catch(Throwable $e){
