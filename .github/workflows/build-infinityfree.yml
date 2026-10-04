@@ -1,0 +1,28 @@
+name: Build InfinityFree package
+
+on:
+  push:
+    branches: [deployment-package]
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build deployment ZIP
+        run: |
+          rm -rf package
+          mkdir package
+          rsync -a --exclude='.git/' --exclude='.github/' --exclude='supabase/tests/' --exclude='.env.example' --exclude='.gitignore' --exclude='README.md' --exclude='deployment/' ./ package/
+          cp config.local.php.example package/config.local.php
+          sed -i "s/PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE/PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE/" package/config.local.php
+          cd package
+          zip -r ../hashttick-infinityfree.zip .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hashttick-infinityfree
+          path: hashttick-infinityfree.zip
+          retention-days: 7
