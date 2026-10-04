@@ -40,7 +40,14 @@ const HashttickAdmin=(()=> {
   }
 
   async function load(){
-    const d=await api('api/admin.php?action=collections');
+    let d=await api('api/admin.php?action=collections');
+    const collections=d.collections||[];
+    if(!collections.length||collections.every(c=>Number(c.total_words||0)===0)){
+      try{
+        await api('api/admin.php?action=seed_defaults',{method:'POST'});
+        d=await api('api/admin.php?action=collections');
+      }catch(_e){}
+    }
     $('#adminCollectionList').innerHTML=(d.collections||[]).map(c=>
       '<div class="word-item"><div><b>'+esc(c.name)+'</b><br><small>'+esc(c.type)+' · '+Number(c.total_words||0)+' واژه</small></div>'+
       '<div class="item-actions"><button class="btn secondary" data-edit-collection="'+c.id+'">ویرایش</button><button class="btn secondary" data-manage="'+c.id+'">مدیریت محتوا</button><button class="btn danger" data-delete-collection="'+c.id+'">حذف</button></div></div>'
