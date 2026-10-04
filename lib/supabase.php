@@ -1,6 +1,16 @@
 <?php
 declare(strict_types=1);
-function env_value(string $key, ?string $default=null): ?string { $v=getenv($key); return ($v===false||$v==='')?$default:$v; }
+
+$GLOBALS['HASHTTICK_LOCAL_CONFIG'] = is_file(__DIR__.'/../config.local.php')
+    ? (require __DIR__.'/../config.local.php')
+    : [];
+
+function env_value(string $key, ?string $default=null): ?string {
+    $local = $GLOBALS['HASHTTICK_LOCAL_CONFIG'][$key] ?? null;
+    if (is_string($local) && $local !== '') return $local;
+    $v = getenv($key);
+    return ($v===false||$v==='')?$default:$v;
+}
 function sb_url(): string { $u=rtrim((string)env_value('SUPABASE_URL',''),'/'); if($u==='')throw new RuntimeException('SUPABASE_URL is not configured'); return $u; }
 function sb_key(): string { $k=(string)env_value('SUPABASE_PUBLISHABLE_KEY',''); if($k==='')throw new RuntimeException('SUPABASE_PUBLISHABLE_KEY is not configured'); return $k; }
 
