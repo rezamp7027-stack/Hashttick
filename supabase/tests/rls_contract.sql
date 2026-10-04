@@ -1,0 +1,9 @@
+-- Hashttick RLS contract.
+-- Run this with the Supabase CLI/pgTAP test harness using two authenticated test users.
+-- Expected:
+-- * personal tables are isolated by auth.uid()
+-- * anon can only read public collection data
+-- * profiles are not client-updatable
+-- * is_admin cannot be escalated by a normal user
+-- * only admins can mutate collections, collection_words and collection_stories
+-- * review_word is callable only by authenticated users and can affect only their own word
