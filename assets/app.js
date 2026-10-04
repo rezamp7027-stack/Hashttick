@@ -4,6 +4,28 @@ const Hashttick=(()=> {
   const csrf=()=>document.querySelector('meta[name="csrf-token"]')?.content||'';
   const safeHttpUrl=value=>{try{const u=new URL(String(value||''),location.href);return ['http:','https:'].includes(u.protocol)?u.href:''}catch(_e){return ''}};
 
+  let refreshPromise=null;
+
+  function refreshSession(){
+    if(refreshPromise)return refreshPromise;
+    refreshPromise=(async()=>{
+      try{
+        const rr=await fetch('api/auth/refresh.php',{
+          method:'POST',
+          credentials:'same-origin',
+          headers:{'X-CSRF-Token':csrf()}
+        });
+        const rd=await rr.json().catch(()=>({success:false}));
+        return rr.ok&&rd.success?rd:null;
+      }catch(_e){
+        return null;
+      }finally{
+        refreshPromise=null;
+      }
+    })();
+    return refreshPromise;
+  }
+
   async function api(url,opt={},allowRefresh=true){
     const method=String(opt.method||'GET').toUpperCase();
     const headers=new Headers(opt.headers||{});
@@ -13,18 +35,17 @@ const Hashttick=(()=> {
     const d=await r.json().catch(()=>({success:false,error:'پاسخ نامعتبر از سرور'}));
 
     if(r.status===401&&allowRefresh&&!url.includes('api/auth/refresh.php')){
-      try{
-        const rr=await fetch('api/auth/refresh.php',{
-          method:'POST',
-          credentials:'same-origin',
-          headers:{'X-CSRF-Token':csrf()}
-        });
-        const rd=await rr.json().catch(()=>({success:false}));
-        if(rr.ok&&rd.success)return api(url,opt,false);
-      }catch(_e){}
-      if(d.redirect){location.href=d.redirect;throw new Error(d.error||'جلسه منقضی شده است');}
+      const rd=await refreshSession();
+      if(rd?.success)return api(url,opt,false);
+      location.href=rd?.redirect||d.redirect||'login.php';
+      throw new Error(rd?.error||'جلسه ورود منقضی شده است؛ دوباره وارد شوید');
     }
-    if(r.status===401&&d.redirect){location.href=d.redirect;throw new Error(d.error||'لطفاً وارد شوید');}
+
+    if(r.status===401&&d.redirect){
+      location.href=d.redirect;
+      throw new Error(d.error||'لطفاً وارد شوید');
+    }
+
     if(!r.ok||d.success===false)throw new Error(d.error||'خطا');
     return d;
   }
