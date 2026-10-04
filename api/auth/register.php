@@ -1,6 +1,7 @@
 <?php
 require_once '../../config.php'; header('Content-Type: application/json; charset=utf-8');
 if($_SERVER['REQUEST_METHOD']!=='POST'){http_response_code(405);echo json_encode(['success'=>false,'error'=>'متد غیرمجاز'],JSON_UNESCAPED_UNICODE);exit;}
+validateCsrf();
 $username=trim($_POST['username']??'');$email=strtolower(trim($_POST['email']??''));$password=$_POST['password']??'';
 if(!preg_match('/^[\p{L}\p{N}_.-]{3,32}$/u',$username)){echo json_encode(['success'=>false,'error'=>'نام کاربری باید ۳ تا ۳۲ کاراکتر باشد'],JSON_UNESCAPED_UNICODE);exit;}
 if(!filter_var($email,FILTER_VALIDATE_EMAIL)){echo json_encode(['success'=>false,'error'=>'ایمیل معتبر نیست'],JSON_UNESCAPED_UNICODE);exit;}
