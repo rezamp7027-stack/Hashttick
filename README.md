@@ -1,37 +1,60 @@
 # Hashttick
 
-Hashttick is an English vocabulary learning application migrated from the legacy PHP/MySQL design to Supabase Postgres + Supabase Auth.
+Hashttick is a Persian-first English vocabulary learning application using PHP, Supabase Auth, PostgreSQL and Row Level Security.
 
-## Backend status
-- Supabase project: htfrixfcirgrhlmwtkjs
-- Auth: Supabase Auth
-- Database: PostgreSQL
-- Personal data: RLS protected by auth.uid()
-- Review engine: atomic review_word RPC
-- Admin access: profiles.is_admin + private.is_admin()
-- Collections: dictionary / story / PDF / video
-- Review history and daily statistics
-- SQL execution from the web admin panel is disabled for security
-- AI credentials are no longer hard-coded
+## Features
+- Email/password authentication
+- Personal vocabulary: add/edit/delete
+- 8-tick review flow; 6 successful ticks = learned
+- Red review and re-review flow
+- Review history, daily/weekly statistics and tick distribution
+- Study-day / streak-break reset behavior
+- Dictionary collections and units
+- Story collections and chapters
+- PDF/video collection metadata
+- Add collection words to personal vocabulary
+- Word lookup and FastDic fallback
+- Browser pronunciation
+- Handwriting canvas + optional Tesseract fallback
+- AI story generation via Groq using a server-side environment secret
+- Admin collection, dictionary, story and statistics management
+
+## Supabase
+Project ref: `htfrixfcirgrhlmwtkjs`.
+
+RLS is enabled on every exposed application table. Personal records are scoped by `auth.uid()`. Admin collection writes are controlled by the database-backed `private.is_admin()` helper.
+
+Migrations:
+- `supabase/migrations/20261004000000_hashttick_initial.sql`
+- `supabase/migrations/20261004010000_harden_rls.sql`
+
+RLS contract:
+- `supabase/tests/rls_contract.sql`
+
+## Security
+- No MySQL runtime dependency.
+- No raw SQL execution from the web admin panel.
+- No hard-coded AI credentials.
+- SSL certificate and hostname verification remain enabled for outbound cURL.
+- Ordinary users cannot update `profiles.is_admin`.
+- Personal tables are isolated by authenticated user.
+- Admin writes require `is_admin=true`.
+
+## Environment
+Set these on the PHP host:
+- `SUPABASE_URL=https://htfrixfcirgrhlmwtkjs.supabase.co`
+- `SUPABASE_PUBLISHABLE_KEY`
+- `GROQ_API_KEY` (optional)
+- `GROQ_MODEL` (optional)
+
+Never commit Supabase secret/service keys or Groq credentials.
 
 ## Deployment
-The supplied PHP application has been migrated in the working build to the Supabase REST/Auth API. PHP hosting is required for that build; GitHub Pages cannot execute PHP.
+This is a PHP application and must be deployed to PHP-capable hosting. GitHub Pages cannot execute the PHP backend.
 
-Environment variables:
-- SUPABASE_URL
-- SUPABASE_PUBLISHABLE_KEY
-- GROQ_API_KEY (optional, for AI story generation)
-- GROQ_MODEL (optional)
-
-Do not commit secret keys.
-
-## Administrator
-After creating the first account, promote it explicitly:
-
+To create an administrator after the first registration:
 ```sql
 update public.profiles
 set is_admin = true
 where email = 'YOUR_ADMIN_EMAIL';
 ```
-
-The database schema and RLS policies are versioned under `supabase/migrations/`.
