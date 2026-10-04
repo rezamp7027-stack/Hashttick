@@ -73,6 +73,7 @@ try {
         if($name==='') throw new RuntimeException('نام مجموعه الزامی است');
         $type=$_POST['type']??'dictionary';
         if(!in_array($type,['dictionary','story','pdf','video'],true)) $type='dictionary';
+        if(mb_strlen($name)>180||mb_strlen(trim($_POST['description']??''))>500) throw new RuntimeException('طول نام یا توضیح بیش از حد مجاز است');
         $data=[
             'name'=>$name,
             'description'=>trim($_POST['description']??''),
@@ -107,6 +108,7 @@ try {
         $example=trim($_POST['example']??'');
         $unit=max(1,(int)($_POST['unit']??1));
         if($english===''||$farsi==='') throw new RuntimeException('واژه انگلیسی و معنی فارسی الزامی است');
+        if(mb_strlen($english)>120||mb_strlen($farsi)>240||mb_strlen($example)>500||$unit>999) throw new RuntimeException('طول یا مقدار یکی از فیلدهای واژه بیش از حد مجاز است');
 
         if($a==='create_word'){
             $r=sb_insert('collection_words',[
@@ -136,6 +138,7 @@ try {
         $content=trim($_POST['content']??'');
         $chapter=max(1,(int)($_POST['chapter_number']??1));
         if(!$collection||$title===''||$content==='') throw new RuntimeException('مجموعه، عنوان و متن فصل الزامی است');
+        if(mb_strlen($title)>240||mb_strlen($content)>20000||$chapter>999) throw new RuntimeException('طول یا شماره فصل بیش از حد مجاز است');
         $data=['chapter_number'=>$chapter,'chapter_title'=>$title,'content'=>$content];
 
         if($a==='create_story'){
