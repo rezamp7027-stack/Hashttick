@@ -20,6 +20,33 @@ function csrfToken(): string {
 }
 csrfToken();
 
+function jwtExp(?string $token): ?int{
+    if(!$token)return null;
+    $parts=explode('.',$token);
+    if(count($parts)!==3)return null;
+    $payload=strtr($parts[1],'-_','+/');
+    $pad=strlen($payload)%4;
+    if($pad)$payload.=str_repeat('=',4-$pad);
+    $decoded=base64_decode($payload,true);
+    if($decoded===false)return null;
+    $data=json_decode($decoded,true);
+    return is_array($data)&&isset($data['exp'])&&is_numeric($data['exp'])?(int)$data['exp']:null;
+}
+
+function accessTokenNeedsRefresh(int $leeway=60): bool{
+    $token=getAccessToken();
+    if(!$token)return true;
+    $exp=jwtExp($token);
+    if($exp===null)return false;
+    return $exp<=time()+$leeway;
+}
+
+function ensureFreshSession(): bool{
+    if(!isLoggedIn())return false;
+    if(!accessTokenNeedsRefresh(60))return true;
+    return tryRefreshSession();
+}
+
 function isLoggedIn(): bool{return !empty($_SESSION['access_token'])&&!empty($_SESSION['user_id']);}
 function getUserId(): ?string{return $_SESSION['user_id']??null;}
 function getUsername(): ?string{return $_SESSION['username']??null;}
@@ -115,13 +142,14 @@ function tryRefreshSession(): bool{
 }
 
 function requireLogin(): void{
-    if(!isLoggedIn()){
+    validateCsrf();
+    if(!isLoggedIn()||!ensureFreshSession()){
+        clearAuthSession();
         header('Content-Type: application/json; charset=utf-8');
         http_response_code(401);
-        echo json_encode(['success'=>false,'error'=>'لطفاً وارد شوید','redirect'=>'login.php'],JSON_UNESCAPED_UNICODE);
+        echo json_encode(['success'=>false,'error'=>'جلسه منقضی شده است','code'=>'AUTH_SESSION_EXPIRED','redirect'=>'login.php'],JSON_UNESCAPED_UNICODE);
         exit;
     }
-    validateCsrf();
 }
 
 function requireAdmin(): void{
@@ -136,7 +164,11 @@ function requireAdmin(): void{
 }
 
 function requireLoginForPage(): void{
-    if(!isLoggedIn()){header('Location: login.php');exit;}
+    if(!isLoggedIn()||!ensureFreshSession()){
+        clearAuthSession();
+        header('Location: login.php');
+        exit;
+    }
 }
 
 function requireAdminForPage(): void{
