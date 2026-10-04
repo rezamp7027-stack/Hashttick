@@ -37,10 +37,48 @@ try {
     }
 
     if ($a === 'users') {
-        adminJson(['success'=>true,'users'=>sb_query('profiles',[
+        adminJson([
+            'success'=>true,
+            'currentUserId'=>getUserId(),
+            'users'=>sb_query('profiles',[
+                'select'=>'id,username,email,is_admin,created_at',
+                'order'=>'created_at.desc','limit'=>500
+            ],$t)
+        ]);
+    }
+
+    if ($a === 'set_admin') {
+        requirePost();
+
+        $targetUserId=trim((string)($_POST['user_id']??''));
+        $rawStatus=(string)($_POST['is_admin']??'');
+        if(!preg_match('/^[0-9a-fA-F-]{36}$/',$targetUserId)) {
+            throw new RuntimeException('شناسه کاربر نامعتبر است');
+        }
+        if($rawStatus!=='0'&&$rawStatus!=='1') {
+            throw new RuntimeException('وضعیت ادمین نامعتبر است');
+        }
+
+        $result=sb_rpc(
+            'admin_set_user_role',
+            [
+                'target_user_id'=>$targetUserId,
+                'make_admin'=>$rawStatus==='1'
+            ],
+            $t
+        );
+
+        $updated=sb_query('profiles',[
             'select'=>'id,username,email,is_admin,created_at',
-            'order'=>'created_at.desc','limit'=>500
-        ],$t)]);
+            'id'=>'eq.'.$targetUserId,
+            'limit'=>1
+        ],$t);
+
+        adminJson([
+            'success'=>true,
+            'result'=>$result,
+            'user'=>$updated[0]??null
+        ]);
     }
 
     if ($a === 'seed_defaults') {
