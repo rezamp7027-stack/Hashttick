@@ -33,6 +33,7 @@ const Hashttick=(()=> {
 
   function openModal(id){$('#'+id)?.classList.remove('hidden')}
   function closeModal(id){$('#'+id)?.classList.add('hidden')}
+  function openWordCreate(){const f=$('#addWordForm');if(!f)return;f.reset();if(f.elements.id)f.elements.id.value='';$('#wordModalTitle').textContent='افزودن واژه';$('#wordCancelEdit')?.classList.add('hidden');openModal('wordModal')}
 
   function speak(text){
     if(!text||!('speechSynthesis'in window))return false;
@@ -313,5 +314,5 @@ const Hashttick=(()=> {
   document.addEventListener('click',handleStudyClick);
   document.addEventListener('DOMContentLoaded',initCanvas);
 
-  return {api,auth,dashboard,study,vocabulary,library,statistics,settings,openModal,closeModal};
+  return {api,auth,dashboard,study,vocabulary,library,statistics,settings,openModal,closeModal,openWordCreate};
 })();
