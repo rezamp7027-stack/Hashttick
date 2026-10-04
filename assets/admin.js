@@ -24,7 +24,7 @@ const HashttickAdmin=(()=> {
   function setCollectionForm(c=null){
     const f=$('#collectionForm');
     f.reset();
-    f.id.value=c?.id||'';
+    f.elements.id.value=c?.id||'';
     f.name.value=c?.name||'';
     f.description.value=c?.description||'';
     f.type.value=c?.type||'dictionary';
@@ -38,8 +38,8 @@ const HashttickAdmin=(()=> {
   }
 
   function resetContentForms(){
-    $('#wordForm').reset();$('#wordForm').id.value='';
-    $('#storyForm').reset();$('#storyForm').id.value='';
+    $('#wordForm').reset();$('#wordForm').elements.id.value='';
+    $('#storyForm').reset();$('#storyForm').elements.id.value='';
     $('#wordSubmit').textContent='افزودن واژه';
     $('#storySubmit').textContent='افزودن فصل';
     $('#wordCancelEdit').classList.add('hidden');
@@ -96,7 +96,7 @@ const HashttickAdmin=(()=> {
     if(!row)return;
     api('api/admin.php?action=collection&id='+encodeURIComponent(current.id)).then(d=>{
       const w=(d.words||[]).find(x=>String(x.id)===String(id));if(!w)return;
-      const f=$('#wordForm');f.id.value=w.id;f.english.value=w.english;f.farsi.value=w.farsi;f.example.value=w.example||'';f.unit.value=w.unit||1;
+      const f=$('#wordForm');f.elements.id.value=w.id;f.english.value=w.english;f.farsi.value=w.farsi;f.example.value=w.example||'';f.unit.value=w.unit||1;
       $('#wordSubmit').textContent='ذخیره تغییرات';$('#wordCancelEdit').classList.remove('hidden');$('#contentError').textContent='';
       f.english.focus();
     }).catch(e=>$('#contentError').textContent=e.message);
@@ -105,7 +105,7 @@ const HashttickAdmin=(()=> {
   function editStory(id){
     api('api/admin.php?action=collection&id='+encodeURIComponent(current.id)).then(d=>{
       const s=(d.stories||[]).find(x=>String(x.id)===String(id));if(!s)return;
-      const f=$('#storyForm');f.id.value=s.id;f.chapter_number.value=s.chapter_number;f.chapter_title.value=s.chapter_title;f.content.value=s.content;
+      const f=$('#storyForm');f.elements.id.value=s.id;f.chapter_number.value=s.chapter_number;f.chapter_title.value=s.chapter_title;f.content.value=s.content;
       $('#storySubmit').textContent='ذخیره تغییرات';$('#storyCancelEdit').classList.remove('hidden');$('#contentError').textContent='';
       f.chapter_title.focus();
     }).catch(e=>$('#contentError').textContent=e.message);
