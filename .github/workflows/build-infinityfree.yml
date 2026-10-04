@@ -3,6 +3,8 @@ name: Build InfinityFree package
 on:
   push:
     branches: [deployment-package]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
@@ -18,7 +20,6 @@ jobs:
           mkdir package
           rsync -a --exclude='.git/' --exclude='.github/' --exclude='supabase/tests/' --exclude='.env.example' --exclude='.gitignore' --exclude='README.md' --exclude='deployment/' ./ package/
           cp config.local.php.example package/config.local.php
-          sed -i "s/PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE/PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE/" package/config.local.php
           cd package
           zip -r ../hashttick-infinityfree.zip .
       - uses: actions/upload-artifact@v4
