@@ -14,12 +14,8 @@ function env_value(string $key, ?string $default=null): ?string {
 function sb_url(): string { $u=rtrim((string)env_value('SUPABASE_URL',''),'/'); if($u==='')throw new RuntimeException('SUPABASE_URL is not configured'); return $u; }
 function sb_key_candidates(): array {
     $configured = trim((string)env_value('SUPABASE_PUBLISHABLE_KEY',''));
-    $fallback = 'sb_publishable_pgnE6MaOYJCSvNiSt2h7SA_SN57UyK6';
-    $keys = [];
-    if ($configured !== '') $keys[] = $configured;
-    if ($fallback !== '' && !in_array($fallback, $keys, true)) $keys[] = $fallback;
-    if (!$keys) throw new RuntimeException('SUPABASE_PUBLISHABLE_KEY is not configured');
-    return $keys;
+    if ($configured === '') throw new RuntimeException('SUPABASE_PUBLISHABLE_KEY is not configured');
+    return [$configured];
 }
 function sb_key(): string { return sb_key_candidates()[0]; }
 function sb_is_invalid_api_key(?int $status, mixed $data): bool {
@@ -81,6 +77,11 @@ function sb_error_message(Throwable $e): string {
     if(str_contains($m,'Email not confirmed'))return 'ایمیل شما هنوز تأیید نشده است';
     if(str_contains($m,'duplicate key'))return 'این مقدار قبلاً ثبت شده است';
     if(str_contains($lower,'jwt expired')||str_contains($lower,'token is expired'))return 'جلسه ورود منقضی شده است؛ دوباره وارد شوید';
+    if(str_contains($lower,'already reviewed today'))return 'این واژه امروز قبلاً مرور شده است';
+    if(str_contains($lower,'word already learned'))return 'این واژه قبلاً یادگرفته شده است';
+    if(str_contains($lower,'word not found'))return 'واژه پیدا نشد یا دیگر متعلق به این حساب نیست';
+    if(str_contains($lower,'collection not found'))return 'مجموعه پیدا نشد';
+    if(str_contains($lower,'not authenticated'))return 'جلسه ورود معتبر نیست؛ دوباره وارد شوید';
     if(str_contains($lower,'refresh token')&&(str_contains($lower,'invalid')||str_contains($lower,'not found')||str_contains($lower,'already used')))return 'جلسه ورود دیگر معتبر نیست؛ دوباره وارد شوید';
     return $m?:'خطای نامشخص';
 }
